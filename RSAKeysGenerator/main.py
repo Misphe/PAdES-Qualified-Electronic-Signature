@@ -84,6 +84,7 @@ def app_window_setup():
     app_window.title("RSA Keys Generator")
     app_window.minsize(width=400, height=300)
 
+    app_window.bind('<Escape>', lambda e: app_window.destroy())
 
     return app_window
 
