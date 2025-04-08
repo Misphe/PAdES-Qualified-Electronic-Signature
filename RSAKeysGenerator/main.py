@@ -79,6 +79,7 @@ def on_generate_button_click(pin: str, name: str):
     if is_saved:
         messagebox.showinfo("Success", f"Keys {name}_private.bin and {name}_public.pem have been generated and saved correctly")
 
+
 def app_window_setup():
     app_window = tk.Tk()
     app_window.title("RSA Keys Generator")
@@ -87,6 +88,7 @@ def app_window_setup():
     app_window.bind('<Escape>', lambda e: app_window.destroy())
 
     return app_window
+
 
 def main():
     app_window = app_window_setup()
@@ -107,6 +109,7 @@ def main():
     generate_button.pack()
 
     app_window.mainloop()
+
 
 if __name__ == "__main__":
     main()
