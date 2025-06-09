@@ -1,3 +1,11 @@
+##
+# @file RSAKeysGenerator.py
+#
+# @brief Application generating private and public keys by implementing RSA algorithm.
+# Includes GUI for selecting Pin and keys' names.
+#
+
+
 import tkinter as tk
 from tkinter import messagebox
 from cryptography.hazmat.primitives import serialization, hashes
@@ -10,6 +18,11 @@ import os
 app_font = ("Arial", 12)
 
 
+##
+# @brief Generates an RSA key pair.
+#
+# @return A tuple containing the private key and public key both in PEM format.
+#
 def generate_keys() -> (bytes, bytes):
     private_key = rsa.generate_private_key(
         public_exponent=65537,
@@ -33,6 +46,13 @@ def generate_keys() -> (bytes, bytes):
     return private_key_pem, public_key_pem
 
 
+##
+# @brief Encrypts the private key using AES with a key derived from the user's PIN.
+#
+# @param private_key_pem The private key in PEM format as bytes.
+# @param pin A 6-digit user-provided PIN string.
+# @return The encrypted private key with prepended IV as bytes.
+#
 def encrypt_private_key(private_key_pem: bytes, pin: str):
     pin_hash = hashes.Hash(hashes.SHA256())
     pin_hash.update(pin.encode())
@@ -48,6 +68,14 @@ def encrypt_private_key(private_key_pem: bytes, pin: str):
     return iv + encrypted_private_key
 
 
+##
+# @brief Saves the encrypted private key and the public key to disk.
+#
+# @param encrypted_private_key The encrypted private key with IV as bytes.
+# @param public_key_pem The public key in PEM format.
+# @param name The base filename (without extension) to save the key files.
+# @return True if keys were successfully saved, False otherwise.
+#
 def save_keys(encrypted_private_key, public_key_pem, name) -> bool:
     try:
         with open(f"{name}_private.bin", "wb") as f:
@@ -61,6 +89,14 @@ def save_keys(encrypted_private_key, public_key_pem, name) -> bool:
         return False
 
 
+##
+# @brief Handles the logic when the "Generate RSA Keys" button is clicked.
+#
+# Validates the user input and initiates the key generation and saving process.
+#
+# @param pin The 6-digit PIN entered by the user.
+# @param name The base filename provided by the user.
+#
 def on_generate_button_click(pin: str, name: str):
     if not pin or not name:
         messagebox.showerror("Missing Entry Error", "PIN or file name can not be empty")
@@ -80,6 +116,13 @@ def on_generate_button_click(pin: str, name: str):
         messagebox.showinfo("Success", f"Keys {name}_private.bin and {name}_public.pem have been generated and saved correctly")
 
 
+##
+# @brief Sets up the main application window.
+#
+# Initializes the Tkinter GUI window and binds Escape key to close the app.
+#
+# @return The initialized Tkinter window instance.
+#
 def app_window_setup():
     app_window = tk.Tk()
     app_window.title("RSA Keys Generator")
@@ -90,6 +133,11 @@ def app_window_setup():
     return app_window
 
 
+##
+# @brief Main function that launches the application.
+#
+# Builds the GUI layout and starts the Tkinter event loop.
+#
 def main():
     app_window = app_window_setup()
 

@@ -1,3 +1,11 @@
+##
+# @file PAdES-app.py
+#
+# @brief Application for signing and verifying PDF files using RSA and AES.
+# Includes GUI for selecting files and handling cryptographic operations.
+#
+
+import os
 import tkinter as tk
 from tkinter import messagebox, filedialog, StringVar
 from cryptography.hazmat.primitives import serialization, hashes
@@ -13,11 +21,30 @@ public_key_path: StringVar
 pin: StringVar
 
 
+##
+# @brief Reads and returns the encrypted private key from the file.
+#
+# @return The content of the private key file as bytes, or None on failure.
+#
+def get_encrypted_private_key():
+    try:
+        with open(private_key_path.get(), "rb") as f:
+            encrypted_private_key_with_iv: bytes = f.read()
+    except Exception as e:
+        messagebox.showerror("Private key not found", "There is no private key at the specified location")
+        return None
+    return encrypted_private_key_with_iv
+
+
+##
+# @brief Initializes the main application window and variables.
+#
+# @return The Tkinter window object.
+#
 def app_window_setup():
     app_window = tk.Tk()
     app_window.title("RSA Keys Generator")
     app_window.minsize(width=400, height=300)
-
     app_window.bind('<Escape>', lambda e: app_window.destroy())
 
     global pdf_path, private_key_path, pin, public_key_path
@@ -29,6 +56,9 @@ def app_window_setup():
     return app_window
 
 
+##
+# @brief Opens a file dialog for selecting a PDF file and saves the path.
+#
 def browse_pdf():
     global pdf_path
     path = filedialog.askopenfilename(filetypes=[("PDF files", "*.pdf")])
@@ -38,6 +68,9 @@ def browse_pdf():
         messagebox.showerror("No chosen file", "No file has been chosen")
 
 
+##
+# @brief Opens a file dialog for selecting the private key file (.bin) and saves the path.
+#
 def browse_private_key():
     global private_key_path
     path = filedialog.askopenfilename(filetypes=[("BIN files", "*.bin")])
@@ -47,6 +80,33 @@ def browse_private_key():
         messagebox.showerror("No chosen file", "No file has been chosen")
 
 
+##
+# @brief Loads and saves path to the private key from a predefined USB pendrive location.
+#
+def load_private_key_from_pendrive():
+    global private_key_path
+    pendrive_name = 'NO NAME'
+    pendrive_private_key_name = 'key_private.bin'
+    pendrive_path = f'/Volumes/{pendrive_name}'
+    pendrive_private_key_path = pendrive_path + '/' + pendrive_private_key_name
+
+    if os.path.exists(pendrive_path):
+        if os.path.exists(pendrive_private_key_path):
+            private_key_path.set(pendrive_private_key_path)
+            messagebox.showinfo("Success", f"Loaded private key from: {pendrive_private_key_path}")
+            return
+        else:
+            messagebox.showinfo("File on pendrive not found",
+                                f"There is no file on the '{pendrive_name}' pendrive named '{pendrive_private_key_name}'")
+            return
+    else:
+        messagebox.showerror("Pendrive not found", f"There is no pendrive named '{pendrive_name}'")
+        return
+
+
+##
+# @brief Opens a file dialog for selecting the public key file (.pem) and saves the path.
+#
 def browse_public_key():
     global public_key_path
     path = filedialog.askopenfilename(filetypes=[("PEN files", "*.pem")])
@@ -56,11 +116,17 @@ def browse_public_key():
         messagebox.showerror("No chosen file", "No file has been chosen")
 
 
+##
+# @brief Decrypts the encrypted private key using the provided PIN.
+#
+# @return Decrypted private key in PEM format, or None on failure.
+#
 def decrypt_private_key():
     global private_key_path, pin
     pin_str: str = pin.get()
-    with open(private_key_path.get(), "rb") as f:
-        encrypted_private_key_with_iv: bytes = f.read()
+    encrypted_private_key_with_iv: bytes = get_encrypted_private_key()
+    if encrypted_private_key_with_iv is None:
+        return None
 
     iv = encrypted_private_key_with_iv[:16]
     encrypted_private_key = encrypted_private_key_with_iv[16:]
@@ -79,6 +145,11 @@ def decrypt_private_key():
     return private_key_pem
 
 
+##
+# @brief Signs the PDF file using the provided private RSA key.
+#
+# @param private_key A deserialized RSA private key object.
+#
 def sign_pdf(private_key):
     global pdf_path
     with open(pdf_path.get(), "rb") as f:
@@ -104,25 +175,37 @@ def sign_pdf(private_key):
             new_f.write(signature)
 
 
+##
+# @brief Handles the Sign PDF button logic.
+#
+# Verifies input, decrypts the private key, and signs the PDF.
+#
 def sign_pdf_button():
     try:
         if not all([pdf_path.get(), private_key_path.get(), pin.get()]):
             messagebox.showerror("Error", "One or more fields empty")
             return
         private_key_pem = decrypt_private_key()
+        if private_key_pem is None:
+            messagebox.showerror("Failure", "Couldn't sign the pdf")
+            return
         private_key = serialization.load_pem_private_key(
             private_key_pem,
             password=None,
             backend=default_backend()
         )
-
         sign_pdf(private_key)
     except Exception as e:
-        messagebox.showerror("PIN error", f"Pin is incorrect")
+        messagebox.showerror("PIN error", "Pin is incorrect")
         return
-    messagebox.showinfo("Success", f"Signed PDF successfully")
+    messagebox.showinfo("Success", "Signed PDF successfully")
 
 
+##
+# @brief Extracts the original content and signature from a signed PDF.
+#
+# @return A tuple (content, signature) where both are in bytes.
+#
 def extract_content_and_signature():
     with open(pdf_path.get(), "rb") as f:
         pdf_data = f.read()
@@ -137,6 +220,13 @@ def extract_content_and_signature():
     return content, signature
 
 
+##
+# @brief Verifies the PDF signature against the provided public key.
+#
+# @param content The original PDF content (without signature).
+# @param signature The digital signature extracted from the PDF.
+# @return True if verification succeeds, False otherwise.
+#
 def verify_pdf(content: bytes, signature: bytes) -> bool:
     global pdf_path, public_key_path
     try:
@@ -176,36 +266,51 @@ def verify_pdf(content: bytes, signature: bytes) -> bool:
         return False
 
 
+##
+# @brief Handles the Verify PDF button logic.
+#
+# Extracts the content and verifies the signature.
+#
 def verify_pdf_button():
     global pdf_path
     content, signature = extract_content_and_signature()
     result = verify_pdf(content, signature)
 
 
+##
+# @brief Main function. Sets up the GUI and starts the Tkinter event loop.
+#
 def main():
     global pdf_path, private_key_path, pin, public_key_path
     app_window = app_window_setup()
 
-    tk.Label(app_window, text="Choose pdf file:", font=app_font).grid(row=0, column=0, sticky="w", pady=5, padx=(5,0))
+    tk.Label(app_window, text="Choose pdf file:", font=app_font).grid(row=0, column=0, sticky="w", pady=5, padx=(5, 0))
     tk.Entry(app_window, textvariable=pdf_path, width=50, state="readonly").grid(row=0, column=1, padx=5)
     tk.Button(app_window, text="Browse", command=browse_pdf).grid(row=0, column=2)
 
-    tk.Label(app_window, text="Choose private key (.bin):", font=app_font).grid(row=1, column=0, sticky="w", pady=5, padx=(5,0))
+    tk.Label(app_window, text="Choose private key (.bin):", font=app_font).grid(row=1, column=0, sticky="w", pady=5,
+                                                                                padx=(5, 0))
     tk.Entry(app_window, textvariable=private_key_path, width=50, state="readonly").grid(row=1, column=1, padx=5)
     tk.Button(app_window, text="Browse", command=browse_private_key).grid(row=1, column=2)
+    tk.Button(app_window, text="Load from pendrive", command=load_private_key_from_pendrive).grid(row=1, column=3)
 
-    tk.Label(app_window, text="Choose public key (.pem):", font=app_font).grid(row=2, column=0, sticky="w", pady=5, padx=(5, 0))
+    tk.Label(app_window, text="Choose public key (.pem):", font=app_font).grid(row=2, column=0, sticky="w", pady=5,
+                                                                               padx=(5, 0))
     tk.Entry(app_window, textvariable=public_key_path, width=50, state="readonly").grid(row=2, column=1, padx=5)
     tk.Button(app_window, text="Browse", command=browse_public_key).grid(row=2, column=2)
 
-    tk.Label(app_window, text="Enter a 6 digit PIN:", font=app_font).grid(row=3, column=0, sticky="w" ,pady=(5,0), padx=(5,0))
-    tk.Entry(app_window, textvariable=pin, show="*").grid(row=4, column=0, sticky="w" ,pady=(0,5), padx=(5,0))
+    tk.Label(app_window, text="Enter a 6 digit PIN:", font=app_font).grid(row=3, column=0, sticky="w", pady=(5, 0),
+                                                                          padx=(5, 0))
+    tk.Entry(app_window, textvariable=pin, show="*").grid(row=4, column=0, sticky="w", pady=(0, 5), padx=(5, 0))
 
     tk.Button(app_window, text="Sign PDF", command=sign_pdf_button).grid(row=4, column=1, padx=(10, 0), pady=20)
-    tk.Button(app_window, text="Verify PDF", command=verify_pdf_button).grid(row=4, column=2, padx=(0,10), pady=20)
+    tk.Button(app_window, text="Verify PDF", command=verify_pdf_button).grid(row=4, column=2, padx=(0, 10), pady=20)
 
     app_window.mainloop()
 
 
+##
+# @brief Entry point for the script.
+#
 if __name__ == "__main__":
     main()
