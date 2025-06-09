@@ -25,6 +25,19 @@
 var NAVTREE =
 [
   [ "PAdES Qualified Electronic Signature", "index.html", [
+    [ "PAdES Qualified Electronic Signature Emulator", "md__r_e_a_d_m_e.html", [
+      [ "Overview", "md__r_e_a_d_m_e.html#autotoc_md1", null ],
+      [ "Repository Structure", "md__r_e_a_d_m_e.html#autotoc_md2", null ],
+      [ "RSAKeysGenerator", "md__r_e_a_d_m_e.html#autotoc_md3", [
+        [ "Features", "md__r_e_a_d_m_e.html#autotoc_md4", null ],
+        [ "Usage", "md__r_e_a_d_m_e.html#autotoc_md5", null ]
+      ] ],
+      [ "PAdES-app", "md__r_e_a_d_m_e.html#autotoc_md6", [
+        [ "Signing Features", "md__r_e_a_d_m_e.html#autotoc_md7", null ],
+        [ "Verification Features", "md__r_e_a_d_m_e.html#autotoc_md8", null ]
+      ] ],
+      [ "Technical Specifications", "md__r_e_a_d_m_e.html#autotoc_md9", null ]
+    ] ],
     [ "Namespaces", "namespaces.html", [
       [ "Namespace List", "namespaces.html", "namespaces_dup" ],
       [ "Namespace Members", "namespacemembers.html", [

@@ -159,5 +159,8 @@ def main():
     app_window.mainloop()
 
 
+##
+# @brief Entry point for the script.
+#
 if __name__ == "__main__":
     main()
