@@ -185,6 +185,12 @@ def sign_pdf_button():
         if not all([pdf_path.get(), private_key_path.get(), pin.get()]):
             messagebox.showerror("Error", "One or more fields empty")
             return
+        
+        for path in [pdf_path.get(), private_key_path.get(), pin.get()]:
+            if not os.path.exists(path):
+                messagebox.showerror("Error", "One or more fields refer to a path that no longer exists")
+                return
+
         private_key_pem = decrypt_private_key()
         if private_key_pem is None:
             messagebox.showerror("Failure", "Couldn't sign the pdf")
@@ -233,6 +239,11 @@ def verify_pdf(content: bytes, signature: bytes) -> bool:
         if not all([pdf_path.get(), public_key_path.get()]):
             messagebox.showerror("Missing fields", "You did not select public key or pdf to verify")
             return False
+
+        for path in [pdf_path.get(), public_key_path.get()]:
+            if not os.path.exists(path):
+                messagebox.showerror("Error", "One or more fields refer to a path that no longer exists")
+                return False
 
         with open(public_key_path.get(), "rb") as f:
             public_key_pem = f.read()
