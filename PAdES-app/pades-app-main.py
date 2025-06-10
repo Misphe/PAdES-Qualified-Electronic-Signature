@@ -190,7 +190,7 @@ def sign_pdf_button():
             messagebox.showerror("Error", "One or more fields empty")
             return
 
-        for path in [pdf_path.get(), private_key_path.get(), pin.get()]:
+        for path in [pdf_path.get(), private_key_path.get()]:
             if not os.path.exists(path):
                 messagebox.showerror("Error", "One or more fields refer to a path that no longer exists")
                 return
@@ -206,7 +206,7 @@ def sign_pdf_button():
         )
         sign_pdf(private_key)
     except Exception as e:
-        messagebox.showerror("PIN error", "Pin is incorrect")
+        messagebox.showerror("Decryption failed", "Pin or key is incorrect")
         return
     messagebox.showinfo("Success", "Signed PDF successfully")
 
@@ -214,7 +214,8 @@ def sign_pdf_button():
 ##
 # @brief Extracts the original content and signature from a signed PDF.
 #
-# @return A tuple (content, signature) where both are in bytes.
+# @return A tuple (content, signature) where both are in bytes, or tuple (None, None)
+# when there is a missing signature marker.
 #
 def extract_content_and_signature():
     with open(pdf_path.get(), "rb") as f:
@@ -223,6 +224,7 @@ def extract_content_and_signature():
     marker = b"\n%%PAdES_SIGNATURE%%\n"
     if marker not in pdf_data:
         messagebox.showerror("PDF not signed", "The PDF you have chosen is not a signed PDF")
+        return None, None
 
     parts = pdf_data.split(marker)
     content = parts[0]
@@ -273,7 +275,8 @@ def verify_pdf(content: bytes, signature: bytes) -> bool:
             messagebox.showinfo("Verification success", "Signature has been verified with success")
             return True
         except Exception as e:
-            messagebox.showinfo("Verification failure", f"The PDF signature does not match the public key ({str(e)})")
+            messagebox.showinfo("Verification failure", f"The PDF signature does not match the public key "
+                                                        f"or PDF's contents has been changed")
             return False
 
     except Exception as e:
@@ -289,6 +292,8 @@ def verify_pdf(content: bytes, signature: bytes) -> bool:
 def verify_pdf_button():
     global pdf_path
     content, signature = extract_content_and_signature()
+    if signature is None and content is None:
+        return
     result = verify_pdf(content, signature)
 
 
