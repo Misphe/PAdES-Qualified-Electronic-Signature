@@ -119,7 +119,10 @@ def browse_public_key():
 ##
 # @brief Decrypts the encrypted private key using the provided PIN.
 #
-# @return Decrypted private key in PEM format, or None on failure.
+# The PIN is being hashed with SHA-256 algorithm and then is used do
+# decode the AES algorithm in CBC mode with the provided private key.
+#
+# @return Decrypted private key in PEM format, or None when key has been removed from the defined path.
 #
 def decrypt_private_key():
     global private_key_path, pin
@@ -147,6 +150,7 @@ def decrypt_private_key():
 
 ##
 # @brief Signs the PDF file using the provided private RSA key.
+# The signature is added after a tag at the end of pdf.
 #
 # @param private_key A deserialized RSA private key object.
 #
@@ -185,7 +189,7 @@ def sign_pdf_button():
         if not all([pdf_path.get(), private_key_path.get(), pin.get()]):
             messagebox.showerror("Error", "One or more fields empty")
             return
-        
+
         for path in [pdf_path.get(), private_key_path.get(), pin.get()]:
             if not os.path.exists(path):
                 messagebox.showerror("Error", "One or more fields refer to a path that no longer exists")

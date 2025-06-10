@@ -220,7 +220,8 @@ Variables</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Decrypts the encrypted private key using the provided PIN. </p>
-<dl class="section return"><dt>Returns</dt><dd>Decrypted private key in PEM format, or None on failure. </dd></dl>
+<p>The PIN is being hashed with SHA-256 algorithm and then is used do decode the AES algorithm in CBC mode with the provided private key.</p>
+<dl class="section return"><dt>Returns</dt><dd>Decrypted private key in PEM format, or None when key has been removed from the defined path. </dd></dl>
 
 </div>
 </div>
@@ -319,6 +320,7 @@ Variables</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Signs the PDF file using the provided private RSA key. </p>
+<p>The signature is added after a tag at the end of pdf.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">private_key</td><td>A deserialized RSA private key object. </td></tr>
